@@ -54,7 +54,7 @@ type (
 
 	//Yeelight represents device
 	Yeelight struct {
-		addr string
+		Addr string
 		rnd  *rand.Rand
 	}
 )
@@ -84,7 +84,7 @@ func Discover() (*Yeelight, error) {
 //New creates new device instance for address provided
 func New(addr string) *Yeelight {
 	return &Yeelight{
-		addr: addr,
+		Addr: addr,
 		rnd:  rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
@@ -96,9 +96,9 @@ func (y *Yeelight) Listen() (<-chan *Notification, chan<- struct{}, error) {
 	notifCh := make(chan *Notification)
 	done := make(chan struct{}, 1)
 
-	conn, err := net.DialTimeout("tcp", y.addr, time.Second*3)
+	conn, err := net.DialTimeout("tcp", y.Addr, time.Second*3)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot connect to %s. %s", y.addr, err)
+		return nil, nil, fmt.Errorf("cannot connect to %s. %s", y.Addr, err)
 	}
 
 	fmt.Println("Connection established")
@@ -153,6 +153,12 @@ func (y *Yeelight) SetPower(on bool) error {
 	return err
 }
 
+//SetBright is used to change the brightness level of smart LED.
+func (y *Yeelight) SetBright(brightness int) error {
+	_, err := y.executeCommand("set_bright", brightness, "smooth", 500)
+	return err
+}
+
 func (y *Yeelight) randID() int {
 	i := y.rnd.Intn(100)
 	return i
@@ -174,9 +180,9 @@ func (y *Yeelight) executeCommand(name string, params ...interface{}) (*CommandR
 //executeCommand executes command
 func (y *Yeelight) execute(cmd *Command) (*CommandResult, error) {
 
-	conn, err := net.Dial("tcp", y.addr)
+	conn, err := net.Dial("tcp", y.Addr)
 	if nil != err {
-		return nil, fmt.Errorf("cannot open connection to %s. %s", y.addr, err)
+		return nil, fmt.Errorf("cannot open connection to %s. %s", y.Addr, err)
 	}
 	time.Sleep(time.Second)
 	conn.SetReadDeadline(time.Now().Add(timeout))
